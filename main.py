@@ -4,7 +4,7 @@ from PyQt6.QtCore import Qt
 from PyQt6.QtGui import QAction, QIcon
 from PyQt6.QtWidgets import QApplication, QLineEdit, QPushButton, QMainWindow, \
     QTableWidget, QTableWidgetItem, QDialog, QVBoxLayout, QComboBox, QToolBar, \
-    QStatusBar
+    QStatusBar, QGridLayout, QLabel, QMessageBox
 
 import sqlite3
 
@@ -70,7 +70,6 @@ class MainWindow(QMainWindow):
 
         # findChildren retorna una lista de los objetos de QPushBotton
         children = self.findChildren(QPushButton)
-        print(children)
         if children:
             for child in children:
                 # Remover cada uno de esos objetos
@@ -116,10 +115,42 @@ class DeleteDialog(QDialog):
     def __init__(self):
         super().__init__()
 
-        self.setWindowTitle("Delete a Record")
-        self.setFixedWidth(300)
-        self.setFixedHeight(300)
-        pass
+        self.setWindowTitle("Delete Student Data")
+
+        layout = QGridLayout()
+        confirmation = QLabel("Are you sure you want to delete?")
+        yes = QPushButton("Yes")
+        no = QPushButton("No")
+
+        layout.addWidget(confirmation, 0, 0, 1, 2)
+        layout.addWidget(yes, 1, 0)
+        layout.addWidget(no, 1, 1)
+
+        self.setLayout(layout)
+
+        yes.clicked.connect(self.delete_student)
+
+    def delete_student(self):
+        # Obtener el id y el index de la fila seleccionada
+        index = menu_window.table.currentRow()
+        student_id = menu_window.table.item(index, 0).text()
+
+        connection = sqlite3.connect("database.db")
+        cursor = connection.cursor()
+        # Se pone una coma después de student_id para que python lo
+        # interprete como una tupla
+        cursor.execute("DELETE from students WHERE id = ?", (student_id,))
+        connection.commit()
+        cursor.close()
+        connection.close()
+        menu_window.load_data()
+
+        self.close()
+
+        confirmation_widget = QMessageBox()
+        confirmation_widget.setWindowTitle("Success")
+        confirmation_widget.setText("The record was deleted successfully!")
+        confirmation_widget.exec()
 
 
 class EditDialog(QDialog):
