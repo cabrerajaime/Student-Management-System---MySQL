@@ -1,9 +1,9 @@
 import sys
 
+from PyQt6.QtCore import Qt
 from PyQt6.QtGui import QAction
-from PyQt6.QtWidgets import QApplication, QLabel, QWidget, QGridLayout, \
-    QLineEdit, QPushButton, QMainWindow, QTableWidget, QTableWidgetItem, \
-    QDialog, QVBoxLayout, QComboBox
+from PyQt6.QtWidgets import QApplication, QLineEdit, QPushButton, QMainWindow, \
+    QTableWidget, QTableWidgetItem, QDialog, QVBoxLayout, QComboBox
 
 import sqlite3
 
@@ -16,6 +16,7 @@ class MainWindow(QMainWindow):
         # Ítems que conforman el menu de la ventana principal
         file_menu_item = self.menuBar().addMenu("&File")
         help_menu_item = self.menuBar().addMenu("&Help")
+        search_menu_item = self.menuBar().addMenu("&Search")
 
         # Añadir acciones a los ítems que conforman el menu
         add_student_action = QAction("Add Student", self)
@@ -25,6 +26,10 @@ class MainWindow(QMainWindow):
 
         about_action = QAction("About", self)
         help_menu_item.addAction(about_action)
+
+        search_action = QAction("Search", self)
+        search_action.triggered.connect(self.search)
+        search_menu_item.addAction(search_action)
 
         self.table = QTableWidget()
         self.table.setColumnCount(4)
@@ -51,6 +56,10 @@ class MainWindow(QMainWindow):
 
     def insert(self):
         dialog = InsertDialog()
+        dialog.exec()
+
+    def search(self):
+        dialog = SearchDialog()
         dialog.exec()
 
 
@@ -89,17 +98,54 @@ class InsertDialog(QDialog):
 
     def add_student(self):
         name = self.student_name.text()
-        course = self.course_name.itemText(self.course_name.currentText())
+        course = self.course_name.itemText(self.course_name.currentIndex())
         mobile = self.mobile_number.text()
         connection = sqlite3.connect("database.db")
         cursor = connection.cursor()
-        cursor.execute("INSERT INTO students (name, course, mobile) VALUES (?, ?, ?)",
+        cursor.execute("INSERT INTO students (name, course, mobile) VALUES (?,?,?)",
                        (name, course, mobile))
         connection.commit()
         cursor.close()
         connection.close()
         # Refrescar la tabla de estudiantes en el menu principal
         menu_window.load_data()
+
+
+class SearchDialog(QDialog):
+    def __init__(self):
+        super().__init__()
+
+        self.setWindowTitle("Search Student")
+        self.setFixedWidth(300)
+        self.setFixedHeight(300)
+
+        layout = QVBoxLayout()
+
+        self.student_name = QLineEdit()
+        self.student_name.setPlaceholderText("Name")
+        layout.addWidget(self.student_name)
+
+        self.button = QPushButton("Search")
+        self.button.clicked.connect(self.search)
+        layout.addWidget(self.button)
+
+        self.setLayout(layout)
+
+    def search(self):
+        name = self.student_name.text()
+        connection = sqlite3.connect("database.db")
+        cursor = connection.cursor()
+        result = cursor.execute("SELECT * FROM students WHERE name = ?", (name,))
+        rows = list(result)
+        # Se buscan todas las filas que hagan match con el nombre ingresado
+        items = menu_window.table.findItems(name, Qt.MatchFlag.MatchFixedString)
+        for item in items:
+            # item.row() representa el índice del nombre que estamos buscando
+            # el segundo argumento representa la columna que vamos a resaltar
+            menu_window.table.item(item.row(), 1).setSelected(True)
+
+        cursor.close()
+        connection.close()
 
 
 app = QApplication(sys.argv)
