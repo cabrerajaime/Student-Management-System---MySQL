@@ -3,7 +3,8 @@ import sys
 from PyQt6.QtCore import Qt
 from PyQt6.QtGui import QAction, QIcon
 from PyQt6.QtWidgets import QApplication, QLineEdit, QPushButton, QMainWindow, \
-    QTableWidget, QTableWidgetItem, QDialog, QVBoxLayout, QComboBox, QToolBar
+    QTableWidget, QTableWidgetItem, QDialog, QVBoxLayout, QComboBox, QToolBar, \
+    QStatusBar
 
 import sqlite3
 
@@ -50,6 +51,34 @@ class MainWindow(QMainWindow):
         toolbar.addAction(add_student_action)
         toolbar.addAction(search_action)
 
+        # Creación de barra de estado de elementos
+        self.statusbar = QStatusBar()
+        self.setStatusBar(self.statusbar)
+
+        # Detectar el clic sobre ua celda
+        self.table.cellClicked.connect(self.cell_clicked)
+
+    def cell_clicked(self):
+        edit_button = QPushButton("Edit Record")
+        edit_button.clicked.connect(self.edit)
+
+        delete_button = QPushButton("Delete Record")
+        delete_button.clicked.connect(self.delete)
+
+        # Implementación para evitar que los botones Edit y Record se acumulen cada
+        # vez que se selecciona una celda
+
+        # findChildren retorna una lista de los objetos de QPushBotton
+        children = self.findChildren(QPushButton)
+        print(children)
+        if children:
+            for child in children:
+                # Remover cada uno de esos objetos
+                self.statusbar.removeWidget(child)
+
+        self.statusbar.addWidget(edit_button)
+        self.statusbar.addWidget(delete_button)
+
     def load_data(self):
         connection = sqlite3.connect("database.db")
         result = connection.execute("SELECT * FROM students")
@@ -65,6 +94,10 @@ class MainWindow(QMainWindow):
             # Termina ciclo (las columnas se han llenado), sale y se inserta otra fila
         connection.close()
 
+    def delete(self):
+        dialog = DeleteDialog()
+        dialog.exec()
+
     def insert(self):
         dialog = InsertDialog()
         dialog.exec()
@@ -72,6 +105,28 @@ class MainWindow(QMainWindow):
     def search(self):
         dialog = SearchDialog()
         dialog.exec()
+
+    def edit(self):
+        dialog = EditDialog()
+        dialog.exec()
+
+
+class DeleteDialog(QDialog):
+
+    def __init__(self):
+        super().__init__()
+
+        self.setWindowTitle("Delete a Record")
+        self.setFixedWidth(300)
+        self.setFixedHeight(300)
+        pass
+
+
+class EditDialog(QDialog):
+    def __init__(self):
+        super().__init__()
+
+        pass
 
 
 class InsertDialog(QDialog):
