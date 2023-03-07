@@ -1,9 +1,9 @@
 import sys
 
 from PyQt6.QtCore import Qt
-from PyQt6.QtGui import QAction
+from PyQt6.QtGui import QAction, QIcon
 from PyQt6.QtWidgets import QApplication, QLineEdit, QPushButton, QMainWindow, \
-    QTableWidget, QTableWidgetItem, QDialog, QVBoxLayout, QComboBox
+    QTableWidget, QTableWidgetItem, QDialog, QVBoxLayout, QComboBox, QToolBar
 
 import sqlite3
 
@@ -12,6 +12,7 @@ class MainWindow(QMainWindow):
     def __init__(self):
         super().__init__()
         self.setWindowTitle("Student Management System")
+        self.setMinimumSize(500, 600)
 
         # Ítems que conforman el menu de la ventana principal
         file_menu_item = self.menuBar().addMenu("&File")
@@ -19,7 +20,7 @@ class MainWindow(QMainWindow):
         search_menu_item = self.menuBar().addMenu("&Search")
 
         # Añadir acciones a los ítems que conforman el menu
-        add_student_action = QAction("Add Student", self)
+        add_student_action = QAction(QIcon("icons/add.png"), "Add Student", self)
         # Se llama al método insert
         add_student_action.triggered.connect(self.insert)
         file_menu_item.addAction(add_student_action)
@@ -27,7 +28,8 @@ class MainWindow(QMainWindow):
         about_action = QAction("About", self)
         help_menu_item.addAction(about_action)
 
-        search_action = QAction("Search", self)
+        # QIcon() permite agregar iconos a nuestras acciones
+        search_action = QAction(QIcon("icons/search.png"), "Search", self)
         search_action.triggered.connect(self.search)
         search_menu_item.addAction(search_action)
 
@@ -37,7 +39,16 @@ class MainWindow(QMainWindow):
             ("Id", "Name", "Course", "Mobile"))
         # Quitar visibilidad a los indices verticales de la tabla
         self.table.verticalHeader().setVisible(False)
+        # Mostrar la tabla en la ventana principal de la GUI
         self.setCentralWidget(self.table)
+
+        # Creación de barra de herramientas y agregar elementos
+        toolbar = QToolBar()
+        # Permite que la barra de herramientas pueda moverse de posición
+        toolbar.setMovable(True)
+        self.addToolBar(toolbar)
+        toolbar.addAction(add_student_action)
+        toolbar.addAction(search_action)
 
     def load_data(self):
         connection = sqlite3.connect("database.db")
