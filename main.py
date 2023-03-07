@@ -126,7 +126,58 @@ class EditDialog(QDialog):
     def __init__(self):
         super().__init__()
 
-        pass
+        self.setWindowTitle("Update Student Data")
+        self.setFixedWidth(300)
+        self.setFixedHeight(300)
+
+        layout = QVBoxLayout()
+
+        # Obtener el nombre del estudiante de acuerdo a la fila seleccionada
+        index = menu_window.table.currentRow()
+        student_name = menu_window.table.item(index, 1).text()
+
+        # Obtener el id de la fila seleccionada
+        self.student_id = menu_window.table.item(index, 0).text()
+
+        # Widget para insertar estudiante
+        self.student_name = QLineEdit(student_name)
+        self.student_name.setPlaceholderText("Name")
+        layout.addWidget(self.student_name)
+
+        # Widget para seleccionar el curso
+        course_name = menu_window.table.item(index, 2).text()
+        self.course_name = QComboBox()
+        courses = ["Biology", "Math", "Astronomy", "Physics"]
+        self.course_name.addItems(courses)
+        self.course_name.setCurrentText(course_name)
+        layout.addWidget(self.course_name)
+
+        # Widget para agregar número de telefono
+        mobile_number = menu_window.table.item(index, 3).text()
+        self.mobile_number = QLineEdit(mobile_number)
+        self.mobile_number.setPlaceholderText("Mobile")
+        layout.addWidget(self.mobile_number)
+
+        # Agregar botón para enviar
+        button = QPushButton("Update")
+        button.clicked.connect(self.update_student)
+        layout.addWidget(button)
+
+        self.setLayout(layout)
+
+    def update_student(self):
+        connection = sqlite3.connect("database.db")
+        cursor = connection.cursor()
+        cursor.execute("UPDATE students SET name = ?, course = ?, mobile = ? WHERE id = ?",
+                       (self.student_name.text(),
+                        self.course_name.itemText(self.course_name.currentIndex()),
+                        self.mobile_number.text(),
+                        self.student_id))
+        connection.commit()
+        cursor.close()
+        connection.close()
+        # Actualizar la tabla del menu principal
+        menu_window.load_data()
 
 
 class InsertDialog(QDialog):
