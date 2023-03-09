@@ -8,6 +8,8 @@ from PyQt6.QtWidgets import QApplication, QLineEdit, QPushButton, QMainWindow, \
 
 import sqlite3
 
+from qt_material import apply_stylesheet
+
 
 class DatabaseConnection:
     def __init__(self, database_file="database.db"):
@@ -322,6 +324,7 @@ class SearchDialog(QDialog):
 
 
 app = QApplication(sys.argv)
+apply_stylesheet(app, theme='light_amber.xml')
 menu_window = MainWindow()
 menu_window.show()
 menu_window.load_data()
